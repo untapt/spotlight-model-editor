@@ -4,6 +4,7 @@ import scala.collection.mutable
 import org.idio.dbpedia.spotlight.CustomSpotlightModel
 import org.dbpedia.spotlight.model.DBpediaResource
 import org.idio.wordnet.{WordnetMappingParser, WordnetInterface}
+import java.io.{PrintWriter, File}
 
 /**
  * Copyright 2014 Idio
@@ -34,8 +35,9 @@ object WordnetAligmentReranking{
     println("reading model...")
     val pathToModel = args(0)
     val pathToWordnetAlignment = args(1)
+    val outputFilePath = args(2)
     val wordnetAlignment = WordnetMappingParser.readMapping(pathToWordnetAlignment)
-    val reranking = new WordnetAligmentReranking(pathToModel, wordnetAlignment)
+    val reranking = new WordnetAligmentReranking(pathToModel, wordnetAlignment, outputFilePath)
     reranking.updateModel()
 
   }
@@ -44,7 +46,7 @@ object WordnetAligmentReranking{
 
 //Wordnet aligment wikipediaId->WordnetId
 // wordnetID -> offSet-POS i.e: 123-n
-class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.HashMap[String, String]){
+class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.HashMap[String, String], outputFilePath: String){
 
 
    val spotlightModel = new CustomSpotlightModel(pathToModel)
@@ -105,24 +107,20 @@ class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.Has
   }
 
 
+ private def updateContexts( listOfTopicLemmas: List[(DBpediaResource, List[String])] ){
+
+ }
+
  private def updateSurfaceformsAndAssociations( listOfTopicLemmas: List[(DBpediaResource, List[String])]){
 
+   val outputFile = new PrintWriter(new File(outputFilePath))
    listOfTopicLemmas.foreach{
 
      case(topic:DBpediaResource, lemmas:List[String]) =>{
-
        lemmas.foreach{
          lemma: String =>
-
-           expandLemma(lemma).foreach{
-
-             newLemma: String =>
-
-                println("\t "+ newLemma+"  "+ topic.uri)
-             // attaching lemma-topic nad making lemma spottable
-                spotlightModel.addNewSFDbpediaResource(lemma, topic.uri, Array[String]())
-           }
-
+           val pipedSeparatedLemmas = expandLemma(lemma).mkString("|")
+           outputFile.println(topic.uri + "\t" + pipedSeparatedLemmas)
        }
      }
    }

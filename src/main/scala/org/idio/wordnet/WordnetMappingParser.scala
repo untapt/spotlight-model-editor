@@ -39,6 +39,7 @@ object WordnetMappingParser {
     val wordnetPos = "n"//splitLine(0).split(".")(1)
     val wordnetOffset =  splitLine(1)
     val wordnetId = wordnetOffset + "-" + wordnetPos
+
     (wordnetId, cleanWikipediaId(wikipediaId))
   }
 
