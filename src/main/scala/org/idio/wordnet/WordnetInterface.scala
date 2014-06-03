@@ -25,7 +25,7 @@ import scala.collection.JavaConverters._
  **/
 object WordnetInterface {
 
-  val wordnetPath = System.getenv("WNHOME")// "/Users/dav009/Downloads/WordNet-3.0/dict"
+  val wordnetPath =  "/Users/dav009/Downloads/WordNet-3.0/dict"
   lazy val wordnetFile = new java.io.File(wordnetPath)
   lazy val wordnetDict = new RAMDictionary ( wordnetFile , ILoadPolicy.NO_LOAD ) ;
 
@@ -44,7 +44,7 @@ object WordnetInterface {
 
     // multiwords wornet lemmas are returned separated by _ i.e: hysterical_neurosis
     // Note that wordnet lemmas are not uppercase/lowercase consistent i.e: hysterical_neurosis vs Great_Depression vs depression
-    listOfwords.map(_.replace("_", " ")).asInstanceOf[List[String]]
+    listOfwords.map(_.replace("_", " ")).toList.asInstanceOf[List[String]]
   }
 
 
