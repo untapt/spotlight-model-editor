@@ -73,14 +73,20 @@ class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.Has
 
     listOfTopics.flatMap{
       topic : DBpediaResource =>
+        var synsetId = ""
         try{
-           val synsetId = wordnetAligment.get(topic.uri).get
+          synsetId = wordnetAligment.get(topic.uri).get
 
            val lemmas = WordnetInterface.getWordnetLemmas(synsetId)
+           println("lemmas...\t"+ topic + lemmas)
            Some((topic, lemmas))
         }catch{
 
-          case e:Exception => None
+          case e:Exception => {
+             println("NO LEMMA FOUND...\t"+ topic +" synsetID:"+synsetId)
+             e.printStackTrace()
+             None
+          }
 
         }
     }
@@ -114,7 +120,7 @@ class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.Has
 
                 println("\t "+ newLemma+"  "+ topic.uri)
              // attaching lemma-topic nad making lemma spottable
-               spotlightModel.addNewSFDbpediaResource(lemma, topic.uri, Array[String]())
+                spotlightModel.addNewSFDbpediaResource(lemma, topic.uri, Array[String]())
            }
 
        }
