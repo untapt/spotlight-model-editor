@@ -26,16 +26,17 @@ object WordnetMappingParser {
 
 
   private def cleanWikipediaId(wikipediaID: String): String = {
-    wikipediaID.replace("_","")
+    wikipediaID.replace(" ","_")
   }
 
 
   private def parse(line: String): (String, String) ={
     val splitLine = line.trim.split("\t")
 
+
     val wikipediaId = cleanWikipediaId(splitLine(2))
 
-    val wordnetPos = splitLine(0).split(".")(1)
+    val wordnetPos = "n"//splitLine(0).split(".")(1)
     val wordnetOffset =  splitLine(1)
     val wordnetId = wordnetOffset + "-" + wordnetPos
     (wordnetId, cleanWikipediaId(wikipediaId))
