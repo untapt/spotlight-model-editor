@@ -3,7 +3,7 @@ package org.idio.dbpedia.spotlight.utils.wordnet
 import scala.collection.mutable
 import org.idio.dbpedia.spotlight.CustomSpotlightModel
 import org.dbpedia.spotlight.model.DBpediaResource
-import org.idio.wordnet.WordnetInterface
+import org.idio.wordnet.{WordnetMappingParser, WordnetInterface}
 
 /**
  * Copyright 2014 Idio
@@ -24,6 +24,23 @@ import org.idio.wordnet.WordnetInterface
 /**
  * @author David Przybilla david.przybilla@idioplatform.com
  **/
+
+
+object WordnetAligmentReranking{
+
+
+  def main(args:Array[String]){
+
+    println("reading model...")
+    val pathToModel = args(0)
+    val pathToWordnetAlignment = args(1)
+    val wordnetAlignment = WordnetMappingParser.readMapping(pathToWordnetAlignment)
+    val reranking = new WordnetAligmentReranking(pathToModel, wordnetAlignment)
+    reranking.updateModel()
+
+  }
+
+}
 
 //Wordnet aligment wikipediaId->WordnetId
 // wordnetID -> offSet-POS i.e: 123-n
@@ -95,6 +112,7 @@ class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.Has
 
              newLemma: String =>
 
+                println("\t "+ newLemma+"  "+ topic.uri)
              // attaching lemma-topic nad making lemma spottable
                spotlightModel.addNewSFDbpediaResource(lemma, topic.uri, Array[String]())
            }
@@ -114,8 +132,11 @@ class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.Has
     //Get the lemmas of the matching topics
     val listOfTopicLemmas = getWordnetLemmas(matchingTopics)
 
+    println("Updating sf-associations")
     updateSurfaceformsAndAssociations(listOfTopicLemmas)
 
+    println("exporting model")
+    spotlightModel.exportModels(pathToModel)
   }
 
 
