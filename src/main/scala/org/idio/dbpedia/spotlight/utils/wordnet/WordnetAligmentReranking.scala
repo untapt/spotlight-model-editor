@@ -107,9 +107,29 @@ class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.Has
   }
 
 
- private def updateContexts( listOfTopicLemmas: List[(DBpediaResource, List[String])] ){
+def checkSurfaceFormInModel(dbpediaTopic: DBpediaResource, sf:String): Boolean ={
 
- }
+   // check if the surface form exists
+  try{
+      val surfaceForm = this.spotlightModel.customSurfaceFormStore.sfStore.getSurfaceForm(sf)
+
+      // check association between surfaceForm and Topic
+      val candidates = this.spotlightModel.customCandidateMapStore.candidateMap.getCandidates(surfaceForm)
+       candidates.find(_.resource.id == dbpediaTopic.id ) match {
+         case None => false
+         case Some(s) => true
+       }
+
+  }catch{
+
+    case e:Exception =>{
+        false
+    }
+  }
+
+}
+
+
 
  private def updateSurfaceformsAndAssociations( listOfTopicLemmas: List[(DBpediaResource, List[String])]){
 
@@ -119,7 +139,7 @@ class WordnetAligmentReranking(pathToModel: String, wordnetAligment: mutable.Has
      case(topic:DBpediaResource, lemmas:List[String]) =>{
        lemmas.foreach{
          lemma: String =>
-           val pipedSeparatedLemmas = expandLemma(lemma).mkString("|")
+           val pipedSeparatedLemmas = expandLemma(lemma).filter{ lemma => checkSurfaceFormInModel(topic, lemma)}.mkString("|")
            outputFile.println(topic.uri + "\t" + pipedSeparatedLemmas)
        }
      }
