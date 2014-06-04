@@ -113,6 +113,11 @@ def checkSurfaceFormInModel(dbpediaTopic: DBpediaResource, sf:String): Boolean =
   try{
       val surfaceForm = this.spotlightModel.customSurfaceFormStore.sfStore.getSurfaceForm(sf)
 
+      val annotationProbability =surfaceForm.annotationProbability
+      if (annotationProbability < 0.27) {
+        return false
+      }
+
       // check association between surfaceForm and Topic
       val candidates = this.spotlightModel.customCandidateMapStore.candidateMap.getCandidates(surfaceForm)
        candidates.find(_.resource.id == dbpediaTopic.id ) match {
@@ -139,7 +144,7 @@ def checkSurfaceFormInModel(dbpediaTopic: DBpediaResource, sf:String): Boolean =
      case(topic:DBpediaResource, lemmas:List[String]) =>{
        lemmas.foreach{
          lemma: String =>
-           val filteredLemmas = expandLemma(lemma).filter{ lemma => checkSurfaceFormInModel(topic, lemma)}
+           val filteredLemmas = expandLemma(lemma).filter{ lemma => !checkSurfaceFormInModel(topic, lemma)}
            if (filteredLemmas.size >0 )
               outputFile.println(topic.uri + "\t" + filteredLemmas.mkString("|"))
        }
