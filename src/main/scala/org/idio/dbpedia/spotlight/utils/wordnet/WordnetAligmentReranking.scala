@@ -139,8 +139,9 @@ def checkSurfaceFormInModel(dbpediaTopic: DBpediaResource, sf:String): Boolean =
      case(topic:DBpediaResource, lemmas:List[String]) =>{
        lemmas.foreach{
          lemma: String =>
-           val pipedSeparatedLemmas = expandLemma(lemma).filter{ lemma => checkSurfaceFormInModel(topic, lemma)}.mkString("|")
-           outputFile.println(topic.uri + "\t" + pipedSeparatedLemmas)
+           val filteredLemmas = expandLemma(lemma).filter{ lemma => checkSurfaceFormInModel(topic, lemma)}
+           if (filteredLemmas.size >0 )
+              outputFile.println(topic.uri + "\t" + filteredLemmas.mkString("|"))
        }
      }
    }
