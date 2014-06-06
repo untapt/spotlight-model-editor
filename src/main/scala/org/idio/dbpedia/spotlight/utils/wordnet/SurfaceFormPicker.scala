@@ -157,7 +157,7 @@ class CandidateTopicSurfaceForm(surfaceForm:String, topicId:String, matchedTopic
 class SurfaceFormPicker( val spotlightModel: CustomSpotlightModel, lines:List[String]){
 
   private def  parseFile():List[(String,String, List[String])]={
-   lines.map(parseLine)
+   lines.flatMap(parseLine)
  }
 
   def getPicks():List[(Boolean, String, String)] ={
@@ -184,14 +184,19 @@ class SurfaceFormPicker( val spotlightModel: CustomSpotlightModel, lines:List[St
 
   }
 
-  private def  parseLine(line:String):(String, String, List[String])={
+  private def  parseLine(line:String):Option[(String, String, List[String])]={
 
     println(line)
     val splitLine = line.split("\t")
-    val topic = splitLine(0)
-    val sf = splitLine(1)
-    val matchedTopics = splitLine(2).split('|').toList.filter(!_.contains("disambiguation") )
-    (topic, sf, matchedTopics)
+    if (splitLine.size==3){
+       val topic = splitLine(0)
+       val sf = splitLine(1)
+       val matchedTopics = splitLine(2).split('|').toList.filter(!_.contains("disambiguation") )
+       Some((topic, sf, matchedTopics))
+    }else{
+
+      None
+    }
   }
 
 
