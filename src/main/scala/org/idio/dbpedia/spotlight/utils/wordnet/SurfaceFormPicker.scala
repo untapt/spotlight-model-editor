@@ -85,6 +85,9 @@ class CandidateTopicSurfaceForm(topicId:String, matchedTopics:List[String],  spo
     }
 
 
+
+   try{
+
     val intersectKeys = contextVectors.map(_.asScala.keySet).reduceLeft[scala.collection.Set[TokenType]]{
            (accSet, newSet) => accSet.intersect(newSet)
     }
@@ -101,6 +104,11 @@ class CandidateTopicSurfaceForm(topicId:String, matchedTopics:List[String],  spo
     }
 
     overlappedVector
+
+   }catch{
+
+     case e:Exception => scala.collection.mutable.HashMap[TokenType, Double]()
+   }
 
   }
 
@@ -163,8 +171,13 @@ class SurfaceFormPicker( val spotlightModel: CustomSpotlightModel, lines:List[St
   }
 
   private def  parseLine(line:String):(String, String, List[String])={
+
+    println(line)
     val splitLine = line.split("\t")
-    (splitLine(0),splitLine(1), splitLine(2).split('|').toList)
+    val topic = splitLine(0)
+    val sf = splitLine(1)
+    val matchedTopics = splitLine(2).split('|').toList
+    (topic, sf, matchedTopics)
   }
 
 
