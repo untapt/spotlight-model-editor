@@ -3,6 +3,8 @@ package org.idio.dbpedia.spotlight.utils.wordnet
 import org.idio.dbpedia.spotlight.CustomSpotlightModel
 import org.dbpedia.spotlight.model.TokenType
 import scala.collection.JavaConverters._
+import java.io.{File, PrintWriter}
+
 /**
  * Copyright 2014 Idio
  *
@@ -59,7 +61,7 @@ object CosineSimilarity {
 class CandidateTopicSurfaceForm(surfaceForm:String, topicId:String, matchedTopics:List[String],  spotlightModel:CustomSpotlightModel){
 
 
-  var isCandidate :Boolean= true
+
 
   val topicVector = spotlightModel.customDbpediaResourceStore.resStore.getResourceByName(topicId)
 
@@ -119,7 +121,7 @@ class CandidateTopicSurfaceForm(surfaceForm:String, topicId:String, matchedTopic
 
       println("\t sf:"+surfaceForm+" - "+ topicId+ " .similarity:"+0.0)
         0.0
-    }
+    }else{
 
     val allKeys = overlappedVector.keySet.union(topicVector.asScala.keySet)
 
@@ -134,14 +136,20 @@ class CandidateTopicSurfaceForm(surfaceForm:String, topicId:String, matchedTopic
 
 
     cosineSimilarity
+   }
 
   }
 
-  def getValue():Boolean = {
+  val isCandidate :Boolean=  {
     val overlappedVector = overlapVectors()
     val topicVectorCounts = spotlightModel.customContextStore.contextStore.getContextCounts(topicVector)
-    getSimilarity(overlappedVector, topicVectorCounts )
-    true
+    val  sim = getSimilarity(overlappedVector, topicVectorCounts )
+    if (sim>0.53){
+      true
+    }else{
+       false
+    }
+
   }
 
 }
@@ -152,21 +160,27 @@ class SurfaceFormPicker( val spotlightModel: CustomSpotlightModel, lines:List[St
    lines.map(parseLine)
  }
 
-  def getPicks(){
+  def getPicks():List[(Boolean, String, String)] ={
 
     val parsedLines = parseFile()
 
-    parsedLines.par.foreach{
+    val results = parsedLines.par.map{
 
       case (topic:String,surfaceForm:String, matchedTopics:List[String])=>{
 
         val candidateInspector = new CandidateTopicSurfaceForm(surfaceForm, topic, matchedTopics, spotlightModel)
-        println(topic+" "+ surfaceForm)
-        println("\t"+ candidateInspector.getValue )
-
+        (candidateInspector.isCandidate, topic:String, surfaceForm:String)
       }
 
     }
+
+    val only_positive_results = results.par.filter{
+      case (candidateFlag:Boolean, topic:String, surfaceForms:String)=>
+       candidateFlag }.toList
+
+
+    only_positive_results
+
 
   }
 
@@ -176,7 +190,7 @@ class SurfaceFormPicker( val spotlightModel: CustomSpotlightModel, lines:List[St
     val splitLine = line.split("\t")
     val topic = splitLine(0)
     val sf = splitLine(1)
-    val matchedTopics = splitLine(2).split('|').toList
+    val matchedTopics = splitLine(2).split('|').toList.filter(!_.contains("disambiguation") )
     (topic, sf, matchedTopics)
   }
 
@@ -190,10 +204,18 @@ object SurfaceFormPicker {
   def main(args: Array[String]){
     val pathToFile = args(0)
     val pathToModel = args(1)
+    val outputFile = args(2)
     val spotlightModel  =  new CustomSpotlightModel(pathToModel)
 
     val surfaceFormPicker = new SurfaceFormPicker(spotlightModel, scala.io.Source.fromFile(pathToFile).getLines().toList)
-    surfaceFormPicker.getPicks()
+    val listOfPositives = surfaceFormPicker.getPicks()
+
+    val writer = new PrintWriter(new File(outputFile ))
+    listOfPositives.foreach{
+
+      case (flag:Boolean, topic:String, surfaceForms:String) =>
+        writer.write(topic+"\t"+surfaceForms+"\n")
+    }
   }
 
 
