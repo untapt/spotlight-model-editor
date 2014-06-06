@@ -3,7 +3,10 @@ package org.idio.dbpedia.spotlight.utils.wordnet
 import org.idio.dbpedia.spotlight.CustomSpotlightModel
 import org.dbpedia.spotlight.model.TokenType
 import scala.collection.JavaConverters._
-import java.io.{File, PrintWriter}
+import java.io.{InputStreamReader, BufferedReader, File, PrintWriter}
+import net.liftweb.json.JsonParser
+import java.net.{HttpURLConnection, URL}
+
 
 /**
  * Copyright 2014 Idio
@@ -203,6 +206,8 @@ class SurfaceFormPicker( val spotlightModel: CustomSpotlightModel, lines:List[St
 
 }
 
+
+
 object SurfaceFormPicker {
 
 
@@ -224,5 +229,129 @@ object SurfaceFormPicker {
   }
 
 
+
+}
+
+
+
+class WikipediaTopicMatcher(topic:String, surfaceForms:String){
+
+  val firstSurfaceForm = surfaceForms.split('|')(0)
+  val page = new URL("http://en.wikipedia.org/w/api.php?format=json&action=query&rvlimit=max&srsearch="+firstSurfaceForm+"&bllimit=max&list=search&srprop=timestamp&sroffset=0")
+
+  val result = {
+
+    val con:HttpURLConnection = page.openConnection().asInstanceOf[HttpURLConnection]
+    con.setRequestMethod("GET")
+    con.setConnectTimeout(1000)
+
+    val response:StringBuffer = new StringBuffer()
+
+
+    val in:BufferedReader = new BufferedReader(
+      new InputStreamReader(con.getInputStream()));
+
+
+    var inputLine:String =""
+    inputLine = in.readLine()
+    while(inputLine!=null ){
+      response.append(inputLine)
+      inputLine = in.readLine()
+
+    }
+    in.close()
+
+    response.toString()
+  }
+
+
+  val jsonResult = scala.util.parsing.json.JSON.parseFull(result)
+
+  val matchedTopics = {
+  try{
+            jsonResult match {
+              case Some(m: Map[String, Any]) =>
+                   m("query")  match {
+                     case query:Map[String, Any] =>{
+
+                        query("search") match{
+
+                           case topicMatches:List[Map[String, Any]]  =>{
+
+                              topicMatches.flatMap{
+
+                                   topicMatch:Map[String, Any] =>
+                                       topicMatch.get("title")
+                              }.map{_.asInstanceOf[String].replace(" ","_")}
+
+                           }
+                        }
+
+                     }
+
+
+                   }
+            }
+  }catch{
+
+    case e:Exception => List[String]()
+  }
+
+  }
+
+
+
+
+
+
+}
+
+
+
+object WikipediaTopicMatcher{
+
+  def parseFile(lines: List[String]):List[(String, String, List[String])] = {
+
+    val parsedLines = lines.map{
+      line =>
+        val splitLine = line.trim.split("\t")
+        val topic = splitLine(0)
+        val surfaceForms = splitLine(1)
+        (topic, surfaceForms)
+    }
+
+    val results = parsedLines.par.map{
+      case (topic:String, surfaceForms:String) =>
+            val matcher = new WikipediaTopicMatcher(topic,surfaceForms)
+           println("sf:"+surfaceForms + "  "+ matcher.matchedTopics)
+           (topic, surfaceForms, matcher.matchedTopics)
+
+    }.toList
+
+    results
+
+
+  }
+
+
+
+  def main(args: Array[String]){
+
+    val file = args(0)
+    val outputFile = args(0)+"_withMatchedTopicsColumn"
+    val results = parseFile(scala.io.Source.fromFile(file).getLines.toList)
+
+    println("writting to file")
+    val writer = new PrintWriter(new File(outputFile ))
+    results.foreach{
+
+      case (topic:String, surfaceForms:String, matchedTopics:List[String]) =>
+        writer.write(topic+"\t"+surfaceForms+"\t"+matchedTopics.mkString("|")+"\n")
+    }
+
+    writer.close()
+
+
+  }
 
 }
