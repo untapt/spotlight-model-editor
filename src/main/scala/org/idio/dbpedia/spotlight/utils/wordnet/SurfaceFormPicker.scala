@@ -56,7 +56,7 @@ object CosineSimilarity {
 
 
 
-class CandidateTopicSurfaceForm(topicId:String, matchedTopics:List[String],  spotlightModel:CustomSpotlightModel){
+class CandidateTopicSurfaceForm(surfaceForm:String, topicId:String, matchedTopics:List[String],  spotlightModel:CustomSpotlightModel){
 
 
   var isCandidate :Boolean= true
@@ -117,7 +117,7 @@ class CandidateTopicSurfaceForm(topicId:String, matchedTopics:List[String],  spo
 
     if (overlapVectors().size<1){
 
-      println("\t"+ topicId+ " .similarity:"+0.0)
+      println("\t sf:"+surfaceForm+" - "+ topicId+ " .similarity:"+0.0)
         0.0
     }
 
@@ -130,7 +130,7 @@ class CandidateTopicSurfaceForm(topicId:String, matchedTopics:List[String],  spo
 
 
     val cosineSimilarity = CosineSimilarity.cosineSimilarity(overlappedVectorCalculation, overlappedVectortopic)
-    println("\t"+ topicId+ " .similarity:"+cosineSimilarity)
+    println("\t sf:"+surfaceForm+" - "+ topicId+ " .similarity:"+cosineSimilarity)
 
 
     cosineSimilarity
@@ -160,7 +160,7 @@ class SurfaceFormPicker( val spotlightModel: CustomSpotlightModel, lines:List[St
 
       case (topic:String,surfaceForm:String, matchedTopics:List[String])=>{
 
-        val candidateInspector = new CandidateTopicSurfaceForm(topic, matchedTopics, spotlightModel)
+        val candidateInspector = new CandidateTopicSurfaceForm(surfaceForm, topic, matchedTopics, spotlightModel)
         println(topic+" "+ surfaceForm)
         println("\t"+ candidateInspector.getValue )
 
