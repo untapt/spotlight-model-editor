@@ -320,11 +320,15 @@ object WikipediaTopicMatcher{
         (topic, surfaceForms)
     }
 
-    val results = parsedLines.par.map{
+    val results = parsedLines.par.flatMap{
       case (topic:String, surfaceForms:String) =>
+        try{
             val matcher = new WikipediaTopicMatcher(topic,surfaceForms)
            println("sf:"+surfaceForms + "  "+ matcher.matchedTopics)
-           (topic, surfaceForms, matcher.matchedTopics)
+           Some(topic, surfaceForms, matcher.matchedTopics)
+        } catch{
+          case e:Exception => None
+        }
 
     }.toList
 
