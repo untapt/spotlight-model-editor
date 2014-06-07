@@ -194,7 +194,7 @@ class SurfaceFormPicker( val spotlightModel: CustomSpotlightModel, lines:List[St
     if (splitLine.size==3){
        val topic = splitLine(0)
        val sf = splitLine(1)
-       val matchedTopics = splitLine(2).split('|').toList.filter(!_.contains("disambiguation") )
+       val matchedTopics = splitLine(2).split('|').toList.filter(!_.contains("disambiguation") ).map(_.replace(" ","_"))
        Some((topic, sf, matchedTopics))
     }else{
 
